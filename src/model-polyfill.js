@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 (function setupModelPolyfill() {
   if (typeof window === 'undefined') return;
@@ -33,6 +34,7 @@ import * as THREE from 'three';
         canvas: null,
         mutationObserver: null,
         renderRoot: null,
+        model: null,
       };
       stateMap.set(el, state);
     }
@@ -131,15 +133,28 @@ import * as THREE from 'three';
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
 
-        const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const color = this.src.split('/').pop().split('.').shift(); // temp
-        const material = new THREE.MeshStandardMaterial({ color: `${color}` });
-        const cube = new THREE.Mesh(geometry, material);
-        scene.add(cube);
+        const loader = new GLTFLoader();
+        const gltf = await loader.loadAsync(currentSrc);
+
+        const model = gltf.scene;
+        scene.add(model);
+        state.model = model;
+
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 1.5 / maxDim;
+        model.scale.multiplyScalar(scale);
+
+        model.position.x = -center.x * scale;
+        model.position.y = -center.y * scale;
+        model.position.z = -center.z * scale;
 
         const animate = () => {
-          cube.rotation.x += 0.01;
-          cube.rotation.y += 0.01;
+          if (!model) return;
+          model.rotation.x += 0.01;
+          model.rotation.y += 0.01;
           renderer.render(scene, camera);
         };
         renderer.setAnimationLoop(animate);
@@ -269,6 +284,26 @@ import * as THREE from 'three';
       }
 
       if (state.scene) {
+        if (state.model) {
+          state.model.traverse((child) => {
+            if (child.isMesh) {
+              if (child.geometry) child.geometry.dispose?.();
+              if (child.material) {
+                if (Array.isArray(child.material)) {
+                  child.material.forEach((m) => {
+                    if (m.map) m.map.dispose?.();
+                    m.dispose?.();
+                  });
+                } else {
+                  if (child.material.map) child.material.map.dispose?.();
+                  child.material.dispose?.();
+                }
+              }
+            }
+          });
+          state.model = null;
+        }
+
         for (const child of [...state.scene.children]) {
           state.scene.remove(child);
           if (child.geometry) child.geometry.dispose?.();

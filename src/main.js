@@ -2,7 +2,7 @@ import './style.css';
 
 function addModel() {
   const model = document.createElement('model');
-  model.src = 'green.glb';
+  model.src = '/cube-green.glb';
   document.getElementById('app').appendChild(model);
 }
 
