@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>model-polyfill</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1>model-polyfill</h1>
+
+      <div>
+        <model>
+          <source src="blue.glb" />
+        </model>
+      </div>
+
+      <div>
+        <model>
+          <source src="red.glb" />
+        </model>
+      </div>
+
+      <input type="button" value="Add Model" id="add-model-button" />
+    </div>
+    <script type="module" src="/src/model-polyfill.js"></script>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
